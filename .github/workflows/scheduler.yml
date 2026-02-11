@@ -1,6 +1,11 @@
 name: Canvas AI Planner
 
 on:
+  # Trigger on push to make workflow visible in Actions tab
+  push:
+    branches:
+      - master
+  
   # Weekly review - Sundays at 6 PM (18:00) UTC-3 (Brazil time)
   # Adjust the cron time based on your timezone
   schedule:
@@ -23,7 +28,7 @@ on:
 
 jobs:
   weekly-review:
-    if: github.event.schedule == '0 21 * * 0' || github.event.inputs.job == 'weekly' || github.event.inputs.job == 'both'
+    if: (github.event_name == 'schedule' && github.event.schedule == '0 21 * * 0') || github.event.inputs.job == 'weekly' || github.event.inputs.job == 'both'
     runs-on: ubuntu-latest
     
     steps:
@@ -52,7 +57,7 @@ jobs:
         run: npm run weekly
 
   daily-update:
-    if: github.event.schedule == '0 12 * * *' || github.event.inputs.job == 'daily' || github.event.inputs.job == 'both'
+    if: (github.event_name == 'schedule' && github.event.schedule == '0 12 * * *') || github.event.inputs.job == 'daily' || github.event.inputs.job == 'both'
     runs-on: ubuntu-latest
     
     steps:
