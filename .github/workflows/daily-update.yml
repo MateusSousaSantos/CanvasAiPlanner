@@ -16,6 +16,8 @@ on:
 jobs:
   daily-update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
