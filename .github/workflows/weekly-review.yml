@@ -6,7 +6,7 @@ on:
     branches:
       - master
   
-  # Weekly review - Sundays at 6 PM (18:00) UTC-3 (Brazil time)
+  # Weekly review - Sundays at 21:00 UTC (6 PM Brazil time)
   schedule:
     # Sunday 21:00 UTC = 18:00 UTC-3 (6 PM Brazil time)
     - cron: '0 21 * * 0'  # Weekly review

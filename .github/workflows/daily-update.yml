@@ -34,8 +34,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .assignment-cache.json
-          key: assignment-cache-${{ github.run_number }}
+          key: assignment-cache-${{ hashFiles('package-lock.json') }}-${{ github.run_number }}
           restore-keys: |
+            assignment-cache-${{ hashFiles('package-lock.json') }}-
             assignment-cache-
       
       - name: Run daily update
@@ -49,9 +50,3 @@ jobs:
           OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
           TZ: 'America/Sao_Paulo'
         run: npm run daily
-      
-      - name: Save assignment cache
-        uses: actions/cache@v3
-        with:
-          path: .assignment-cache.json
-          key: assignment-cache-${{ github.run_number }}
