@@ -1,0 +1,57 @@
+name: Daily Update
+
+on:
+  # Trigger on push to make workflow visible in Actions tab
+  push:
+    branches:
+      - master
+  
+  # Every day at 12:00 UTC = 9:00 AM UTC-3 (Brazil time)
+  schedule:
+    - cron: '0 12 * * *'  # Daily update
+  
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  daily-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Restore assignment cache
+        uses: actions/cache@v3
+        with:
+          path: .assignment-cache.json
+          key: assignment-cache-${{ github.run_number }}
+          restore-keys: |
+            assignment-cache-
+      
+      - name: Run daily update
+        env:
+          CANVAS_API_URL: ${{ secrets.CANVAS_API_URL }}
+          CANVAS_API_TOKEN: ${{ secrets.CANVAS_API_TOKEN }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          TZ: 'America/Sao_Paulo'
+        run: npm run daily
+      
+      - name: Save assignment cache
+        uses: actions/cache@v3
+        with:
+          path: .assignment-cache.json
+          key: assignment-cache-${{ github.run_number }}
