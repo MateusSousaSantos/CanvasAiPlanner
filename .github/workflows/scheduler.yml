@@ -28,7 +28,7 @@ on:
 
 jobs:
   weekly-review:
-    if: (github.event_name == 'schedule' && github.event.schedule == '0 21 * * 0') || github.event.inputs.job == 'weekly' || github.event.inputs.job == 'both'
+    if: (github.event_name == 'schedule' && github.event.schedule == '0 21 * * 0') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.job == 'weekly' || github.event.inputs.job == 'both'))
     runs-on: ubuntu-latest
     
     steps:
@@ -57,7 +57,7 @@ jobs:
         run: npm run weekly
 
   daily-update:
-    if: (github.event_name == 'schedule' && github.event.schedule == '0 12 * * *') || github.event.inputs.job == 'daily' || github.event.inputs.job == 'both'
+    if: (github.event_name == 'schedule' && github.event.schedule == '0 12 * * *') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.job == 'daily' || github.event.inputs.job == 'both'))
     runs-on: ubuntu-latest
     
     steps:
