@@ -34,9 +34,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .assignment-cache.json
-          key: assignment-cache-${{ hashFiles('package-lock.json') }}-${{ github.run_number }}
+          key: assignment-cache-${{ github.run_id }}
           restore-keys: |
-            assignment-cache-${{ hashFiles('package-lock.json') }}-
             assignment-cache-
       
       - name: Run daily update
