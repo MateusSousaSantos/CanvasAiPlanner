@@ -31,6 +31,9 @@ jobs:
         run: npm ci
       
       - name: Restore assignment cache
+        # Cache is automatically saved at end of job by actions/cache@v3
+        # Each run creates a new cache entry with unique run_id
+        # Most recent cache is restored via restore-keys prefix match
         uses: actions/cache@v3
         with:
           path: .assignment-cache.json
