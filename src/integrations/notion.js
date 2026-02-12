@@ -282,6 +282,247 @@ class NotionClient {
       throw error;
     }
   }
+
+  /**
+   * Get all tasks from the task database
+   */
+  async getTasksFromDatabase() {
+    try {
+      const taskDatabaseId = process.env.NOTION_TASK_DATABASE_ID || this.databaseId;
+      const response = await this.notion.databases.query({
+        database_id: taskDatabaseId,
+        page_size: 100
+      });
+
+      return response.results;
+    } catch (error) {
+      console.error('Error fetching tasks from Notion:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new task in the task database
+   */
+  async createTaskInDatabase(taskData) {
+    try {
+      const taskDatabaseId = process.env.NOTION_TASK_DATABASE_ID || this.databaseId;
+      
+      const properties = {
+        'Name': {
+          title: [
+            {
+              text: {
+                content: taskData.name
+              }
+            }
+          ]
+        }
+      };
+
+      // Add optional properties if they exist
+      if (taskData.course) {
+        properties['Course'] = {
+          rich_text: [
+            {
+              text: {
+                content: taskData.course
+              }
+            }
+          ]
+        };
+      }
+
+      if (taskData.aiOverview) {
+        properties['AI Overview'] = {
+          rich_text: [
+            {
+              text: {
+                content: taskData.aiOverview
+              }
+            }
+          ]
+        };
+      }
+
+      if (taskData.urgency) {
+        properties['Urgency'] = {
+          select: {
+            name: taskData.urgency
+          }
+        };
+      }
+
+      if (taskData.canvasUrl) {
+        properties['Canvas URL'] = {
+          url: taskData.canvasUrl
+        };
+      }
+
+      if (taskData.dueDate) {
+        properties['Due Date'] = {
+          date: {
+            start: new Date(taskData.dueDate).toISOString()
+          }
+        };
+      }
+
+      if (taskData.done !== undefined) {
+        properties['Done'] = {
+          checkbox: taskData.done
+        };
+      }
+
+      const response = await this.notion.pages.create({
+        parent: { database_id: taskDatabaseId },
+        properties: properties
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Error creating task in Notion:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing task in the task database
+   */
+  async updateTaskInDatabase(pageId, taskData) {
+    try {
+      const properties = {};
+
+      // Update properties that are provided
+      if (taskData.name) {
+        properties['Name'] = {
+          title: [
+            {
+              text: {
+                content: taskData.name
+              }
+            }
+          ]
+        };
+      }
+
+      if (taskData.course) {
+        properties['Course'] = {
+          rich_text: [
+            {
+              text: {
+                content: taskData.course
+              }
+            }
+          ]
+        };
+      }
+
+      if (taskData.aiOverview) {
+        properties['AI Overview'] = {
+          rich_text: [
+            {
+              text: {
+                content: taskData.aiOverview
+              }
+            }
+          ]
+        };
+      }
+
+      if (taskData.urgency) {
+        properties['Urgency'] = {
+          select: {
+            name: taskData.urgency
+          }
+        };
+      }
+
+      if (taskData.canvasUrl) {
+        properties['Canvas URL'] = {
+          url: taskData.canvasUrl
+        };
+      }
+
+      if (taskData.dueDate) {
+        properties['Due Date'] = {
+          date: {
+            start: new Date(taskData.dueDate).toISOString()
+          }
+        };
+      }
+
+      if (taskData.done !== undefined) {
+        properties['Done'] = {
+          checkbox: taskData.done
+        };
+      }
+
+      const response = await this.notion.pages.update({
+        page_id: pageId,
+        properties: properties
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Error updating task in Notion:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Update urgency for all tasks based on current dates
+   */
+  async updateAllTasksUrgency() {
+    try {
+      const tasks = await this.getTasksFromDatabase();
+      let updateCount = 0;
+
+      for (const task of tasks) {
+        const dueDate = task.properties['Due Date']?.date?.start;
+        const currentUrgency = task.properties['Urgency']?.select?.name;
+        const isDone = task.properties['Done']?.checkbox;
+
+        // Skip if no due date or already done
+        if (!dueDate || isDone) continue;
+
+        // Calculate what urgency should be
+        const newUrgency = this.calculateUrgencyFromDate(dueDate);
+
+        // Update if different
+        if (newUrgency !== currentUrgency) {
+          await this.updateTaskInDatabase(task.id, { urgency: newUrgency });
+          updateCount++;
+        }
+      }
+
+      console.log(`  Updated urgency for ${updateCount} tasks`);
+      return updateCount;
+    } catch (error) {
+      console.error('Error updating task urgencies:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate urgency based on due date
+   */
+  calculateUrgencyFromDate(dueDate) {
+    if (!dueDate) return 'Upcoming';
+
+    const now = new Date();
+    const due = new Date(dueDate);
+    const daysUntilDue = (due - now) / (1000 * 60 * 60 * 24);
+
+    if (daysUntilDue < 0) {
+      return 'Overdue';
+    } else if (daysUntilDue <= 2) {
+      return 'Urgent';
+    } else if (daysUntilDue <= 7) {
+      return 'This Week';
+    } else {
+      return 'Upcoming';
+    }
+  }
 }
 
 export default NotionClient;

@@ -7,6 +7,7 @@
   "scripts": {
     "weekly": "node src/jobs/weekly-review.js",
     "daily": "node src/jobs/daily-update.js",
+    "sync": "node src/jobs/task-sync.js",
     "test": "node src/index.js"
   },
   "keywords": ["canvas", "notion", "ai", "productivity"],

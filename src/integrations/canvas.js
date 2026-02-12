@@ -35,6 +35,37 @@ class CanvasClient {
   }
 
   /**
+   * Get all assignments across all courses (including past and future)
+   */
+  async getAllAssignments() {
+    try {
+      const courses = await this.getCourses();
+      const allAssignments = [];
+
+      for (const course of courses) {
+        const assignments = await this.getCourseAssignments(course.id);
+        
+        // Add course name to each assignment
+        const assignmentsWithCourse = assignments.map(assignment => ({
+          ...assignment,
+          course_name: course.name,
+          course_code: course.course_code
+        }));
+        
+        allAssignments.push(...assignmentsWithCourse);
+      }
+
+      // Filter for assignments with due dates and sort by due date
+      return allAssignments
+        .filter(assignment => assignment.due_at)
+        .sort((a, b) => new Date(a.due_at) - new Date(b.due_at));
+    } catch (error) {
+      console.error('Error fetching all assignments:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Get upcoming assignments across all courses
    * @param {number} daysAhead - How many days to look ahead
    */
