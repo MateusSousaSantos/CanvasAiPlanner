@@ -1,56 +1,42 @@
-name: Daily Update
+name: Daily Task Sync
 
 on:
-  # Trigger on push to make workflow visible in Actions tab
-  push:
-    branches:
-      - master
-  
-  # Every day at 12:00 UTC = 9:00 AM UTC-3 (Brazil time)
   schedule:
-    - cron: '0 12 * * *'  # Daily update
-  
-  # Allow manual triggering
-  workflow_dispatch:
+    # Run every day at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allow manual triggering
 
 jobs:
-  daily-update:
+  sync-tasks:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Restore assignment cache
-        # Cache is automatically saved at end of job by actions/cache@v3
-        # Each run creates a new cache entry with unique run_id
-        # Most recent cache is restored via restore-keys prefix match
-        uses: actions/cache@v3
-        with:
-          path: .assignment-cache.json
-          key: assignment-cache-${{ github.run_id }}
-          restore-keys: |
-            assignment-cache-
-      
-      - name: Run daily update
+
+      - name: Run task sync
         env:
-          CANVAS_API_URL: ${{ secrets.CANVAS_API_URL }}
           CANVAS_API_TOKEN: ${{ secrets.CANVAS_API_TOKEN }}
+          CANVAS_BASE_URL: ${{ secrets.CANVAS_BASE_URL }}
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-          AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
-          TZ: 'America/Sao_Paulo'
-        run: npm run daily
+        run: node src/jobs/task-sync.js
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Task sync completed successfully"
+          else
+            echo "❌ Task sync failed"
+          fi
